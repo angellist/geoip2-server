@@ -75,12 +75,12 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .route("/geoip/v2.1/city/:ip", get(city))
         .route("/geoip/v2.1/country/:ip", get(country))
-        .route("/status", get(|| async { "ok" }))
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
                 .on_response(DefaultOnResponse::new().level(Level::INFO).latency_unit(LatencyUnit::Micros)),
         )
+        .route("/status", get(|| async { "ok" }))
         .with_state(Arc::new(reader));
 
     let listener = tokio::net::TcpListener::bind(format!("{bind}:{port}")).await?;
