@@ -31,15 +31,13 @@ impl IntoResponse for LookupError {
             LookupError::IpAddressReserved => (StatusCode::BAD_REQUEST, "IP_ADDRESS_RESERVED", "You have supplied an IP address which belongs to a reserved or private range."),
         };
 
-        let body = serde_json::json!({ "code": code, "error": msg });
-        (status, Json(body)).into_response()
+        (status, Json(serde_json::json!({ "code": code, "error": msg }))).into_response()
     }
 }
 
 async fn city(State(maxmind): State<Arc<maxminddb::Reader<maxminddb::Mmap>>>, Path(ip): Path<String>) -> Result<(StatusCode, Json<serde_json::Value>), LookupError> {
     let ip = IpAddr::from_str(&ip).map_err(|_| LookupError::IpAddressInvalid)?;
     let city: geoip2::City = maxmind.lookup(ip).map_err(|_| LookupError::IpAddressNotFound)?;
-
     let city = serde_json::to_value(city).unwrap();
 
     Ok((StatusCode::OK, Json(city)))
@@ -48,7 +46,6 @@ async fn city(State(maxmind): State<Arc<maxminddb::Reader<maxminddb::Mmap>>>, Pa
 async fn country(State(maxmind): State<Arc<maxminddb::Reader<maxminddb::Mmap>>>, Path(ip): Path<String>) -> Result<(StatusCode, Json<serde_json::Value>), LookupError> {
     let ip = IpAddr::from_str(&ip).map_err(|_| LookupError::IpAddressInvalid)?;
     let country: geoip2::Country = maxmind.lookup(ip).map_err(|_| LookupError::IpAddressNotFound)?;
-
     let country = serde_json::to_value(country).unwrap();
 
     Ok((StatusCode::OK, Json(country)))
@@ -56,15 +53,14 @@ async fn country(State(maxmind): State<Arc<maxminddb::Reader<maxminddb::Mmap>>>,
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let cmd = clap::Command::new("geoip2-server")
+    let args = clap::Command::new("geoip2-server")
         .bin_name("geoip2-server")
         .version(env!("CARGO_PKG_VERSION"))
         .propagate_version(true)
         .arg(clap::Arg::new("bind").value_name("BIND").env("BIND").long("bind").short('b').global(true).default_value("0.0.0.0"))
         .arg(clap::Arg::new("port").value_name("PORT").env("PORT").long("port").short('p').global(true).default_value("3000").value_parser(clap::value_parser!(u16)))
-        .arg(clap::Arg::new("db").value_name("DB").env("DB").long("database").short('d').global(true).required(true));
-
-    let args = cmd.get_matches();
+        .arg(clap::Arg::new("db").value_name("DB").env("DB").long("database").short('d').global(true).required(true))
+        .get_matches();
 
     let bind = args.get_one::<String>("bind").expect("No valid bind address set!");
     let port = args.get_one::<u16>("port").expect("No valid port set!");
@@ -90,7 +86,5 @@ async fn main() -> anyhow::Result<()> {
     let listener = tokio::net::TcpListener::bind(format!("{bind}:{port}")).await?;
     info!("listening on {bind}:{port}...");
 
-    axum::serve(listener, app).await?;
-
-    Ok(())
+    Ok(axum::serve(listener, app).await?)
 }
