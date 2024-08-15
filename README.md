@@ -12,4 +12,4 @@ cargo run --release -- --bind 0.0.0.0 --port 3000 --database /path/to/geolite2.m
 
 ## License
 
-This project is licensed under the [MIT license][license].
+This project is licensed under the [MIT license](license).
