@@ -20,12 +20,6 @@ enum LookupError {
     IpAddressRequired,
     IpAddressNotFound,
     IpAddressReserved,
-    AccountIdRequired,
-    AccountIdUnknown,
-    AuthorizationInvalid,
-    LicenseKeyRequired,
-    InsufficientFunds,
-    PermissionRequired,
 }
 
 impl IntoResponse for LookupError {
@@ -35,12 +29,6 @@ impl IntoResponse for LookupError {
             LookupError::IpAddressRequired => (StatusCode::BAD_REQUEST, "IP_ADDRESS_REQUIRED", "You have not supplied an IP address, which is a required field."),
             LookupError::IpAddressNotFound => (StatusCode::NOT_FOUND, "IP_ADDRESS_NOT_FOUND", "The supplied IP address is not in the database."),
             LookupError::IpAddressReserved => (StatusCode::BAD_REQUEST, "IP_ADDRESS_RESERVED", "You have supplied an IP address which belongs to a reserved or private range."),
-            LookupError::AccountIdRequired => (StatusCode::UNAUTHORIZED, "ACCOUNT_ID_REQUIRED", "You have not supplied a account ID in the Authorization header."),
-            LookupError::AccountIdUnknown => (StatusCode::UNAUTHORIZED, "ACCOUNT_ID_UNKNOWN", "You have supplied an unknown account ID."),
-            LookupError::AuthorizationInvalid => (StatusCode::UNAUTHORIZED, "AUTHORIZATION_INVALID", "You have supplied an invalid account ID and/or license key in the Authorization header."),
-            LookupError::LicenseKeyRequired => (StatusCode::PAYMENT_REQUIRED, "LICENSE_KEY_REQUIRED", "You have not supplied a license key in the Authorization header."),
-            LookupError::InsufficientFunds => (StatusCode::PAYMENT_REQUIRED, "INSUFFICIENT_FUNDS", "The license key you have provided does not have sufficient credits to use this service."),
-            LookupError::PermissionRequired => (StatusCode::FORBIDDEN, "PERMISSION_REQUIRED", "You do not have permission to use the service."),
         };
 
         let body = serde_json::json!({ "code": code, "error": msg });
